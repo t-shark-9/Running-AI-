@@ -6,8 +6,5 @@ curl -fsSL https://ollama.com/install.sh | sh
 
 bash "$(dirname "$0")/start.sh"
 
-# Default model: MoE, so only ~3.6B of 20B params are active per token -> usable
-# speed on CPU. Bigger models: ./pull.sh (see README).
-# ponytail: one pull here, the rest on demand; a 40GB pull would blow the
-# postCreate timeout.
-ollama pull gpt-oss:20b
+# ponytail: no pull here. The model we actually want is 56 GB, which would blow
+# the postCreate timeout. Pull it by hand: ollama pull qwen3.8:27b-bf16
