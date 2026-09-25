@@ -36,23 +36,35 @@ speed by an order of magnitude.
 - After a rebuild, `.devcontainer/setup.sh` re-pulls the default model only.
 - Ollama logs: `/tmp/ollama.log`. WebUI logs: `docker logs open-webui`.
 
-## GLM-4.5-Air on llama.cpp
+## Biggest model that fits: Qwen3.5-122B-A10B
 
 ```bash
-./run-glm.sh
+./run-model.sh
 ```
 
-First run builds llama.cpp (~2 min on 16 cores) and downloads 50.3 GB of
-weights in two shards (~15 min). Both shards are weights — they are one model
-split across two files, and all of it has to be resident. Server comes up on
-port `8081`, OpenAI-compatible.
+122B total params, 10B active, quantized to `UD-IQ3_S` — 46.6 GB of weights
+plus ~2-3 GB of KV cache at `-c 8192`. Leaves ~14 GB headroom on the 64 GB
+machine. First run builds llama.cpp (~2 min) and downloads 46.6 GB (~15 min).
+Serves an OpenAI-compatible API on port `8081`.
 
-RAM: 50.3 GB weights + ~2-3 GB KV cache at `-c 8192`. That fits 64 GB only
-with Ollama's model unloaded, which `run-glm.sh` does for you. Raise context
-with `CTX=16384 ./run-glm.sh` and watch `free -g` — KV cache grows linearly.
+Expect **~2-5 tok/s**. CPU inference at this size is bound by memory bandwidth,
+not core count: ~5 GB of weights get read per token.
 
-Expect **~2-5 tok/s**. 12B params activate per token, so each token reads ~5 GB
-from RAM, and CPU inference at this size is bound by memory bandwidth, not cores.
+### Why not Qwen3.8-Flash-Next
 
-Point Open WebUI at it: Settings → Connections → OpenAI → `http://localhost:8081/v1`,
+Its smallest published quant is `UD-IQ1_S` at 72.5 GB, which exceeds 64 GB of
+RAM. It would run only by paging off disk, at well under 1 tok/s, and IQ1 is
+degraded enough that the 35B model below beats it on output quality.
+
+### Swapping models
+
+```bash
+REPO=bartowski/zai-org_GLM-4.5-Air-GGUF QUANT=IQ3_XXS ./run-model.sh   # 50.3 GB
+REPO=unsloth/Qwen3.6-35B-A3B-GGUF       QUANT=Q8_0    ./run-model.sh   # 36.9 GB, ~10 tok/s
+```
+
+Disk is 128 GB total and each model is cached in `~/.cache/llama.cpp` — clear
+old ones before pulling a third.
+
+Point Open WebUI at it: Settings -> Connections -> OpenAI -> `http://localhost:8081/v1`,
 any API key.
