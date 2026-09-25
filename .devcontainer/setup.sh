@@ -2,6 +2,9 @@
 # Runs once, when the codespace is created.
 set -euo pipefail
 
+# The installer extracts a zstd tarball; the base image has no zstd.
+sudo apt-get update -qq && sudo apt-get install -y -qq zstd
+
 curl -fsSL https://ollama.com/install.sh | sh
 
 bash "$(dirname "$0")/start.sh"
