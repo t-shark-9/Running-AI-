@@ -1,0 +1,15 @@
+{
+  "name": "Ollama + Open WebUI (CPU)",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "hostRequirements": { "cpus": 16, "memory": "64gb", "storage": "128gb" },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "postStartCommand": "bash .devcontainer/start.sh",
+  "forwardPorts": [11434, 8080],
+  "portsAttributes": {
+    "11434": { "label": "Ollama API" },
+    "8080": { "label": "Open WebUI", "onAutoForward": "openPreview" }
+  }
+}
