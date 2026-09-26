@@ -68,3 +68,35 @@ old ones before pulling a third.
 
 Point Open WebUI at it: Settings -> Connections -> OpenAI -> `http://localhost:8081/v1`,
 any API key.
+
+## DiffusionGemma-26B-A4B (block diffusion)
+
+```bash
+./run-diffusiongemma.sh
+```
+
+Interactive chat. First run builds llama.cpp from PR #24423 (~4 min) and
+downloads 50.5 GB (~15 min).
+
+Unlike everything else here this is a **diffusion** language model: it denoises
+a 256-token canvas in parallel rather than generating token by token. Measured
+on the 16-core codespace at BF16: **2.0 tok/s** end to end, 12 tok/s in-step
+parallel, ~6 denoising steps per block.
+
+| Quant | Size | Measured |
+|---|---|---|
+| BF16 | 50.5 GB | 2.0 tok/s |
+| Q8_0 | 26.9 GB | untested |
+| Q4_K_M | 16.8 GB | 3.9 tok/s |
+
+### Why there is no web UI for this one
+
+`llama-server` loads the model but fails every request with "the current
+context does not logits computation" — the PR wires diffusion decoding into
+the CLI only. Open WebUI works for the Ollama models, not this one.
+
+### Chat from the Mac
+
+```bash
+gh codespace ssh -c <name> -- -t 'cd ~/llama.cpp && ./build/bin/llama-diffusion-cli -hf unsloth/diffusiongemma-26B-A4B-it-GGUF:BF16 -cnv -t 16'
+```
